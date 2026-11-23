@@ -38,12 +38,22 @@ BLYNK_WRITE(BLYNK_LED_RED)
   int value = param.asInt();
   Serial.printf("V0 value: %d\r\n", value);
   digitalWrite(PIN_LED_RED, value);
+}
 
+BLYNK_WRITE(BLYNK_LED_GREEN)
+{
+  // Set incoming value from pin V0 to a variable
+  int value = param.asInt();
+  Serial.printf("V1 value: %d\r\n", value);
+  digitalWrite(PIN_LED_GREEN, value);
 }
 
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED()
 {
+  // Request the latest state from the server
+  Blynk.syncVirtual(BLYNK_LED_RED);
+  Blynk.syncVirtual(BLYNK_LED_GREEN);
 }
 
 // This function sends Arduino's uptime every second to Virtual Pin 2.
