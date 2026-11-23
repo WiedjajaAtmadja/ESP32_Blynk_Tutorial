@@ -16,13 +16,18 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
+#include <DHT.h>
 
 #define PIN_LED_RED 2
 #define PIN_LED_GREEN 0
+#define PIN_DHT 23
+#define DHT_TYPE DHT22
 
 
 #define BLYNK_LED_RED V0
 #define BLYNK_LED_GREEN V1
+#define BLYNK_TEMPERATURE V2
+#define BLYNK_HUMIDITY V3
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
@@ -30,6 +35,7 @@ char ssid[] = "Wokwi-GUEST";
 char pass[] = "";
 
 BlynkTimer timer;
+DHT dht(PIN_DHT, DHT_TYPE);
 
 // This function is called every time the Virtual Pin 0 state changes
 BLYNK_WRITE(BLYNK_LED_RED)
@@ -56,12 +62,24 @@ BLYNK_CONNECTED()
   Blynk.syncVirtual(BLYNK_LED_GREEN);
 }
 
-// This function sends Arduino's uptime every second to Virtual Pin 2.
-void myTimerEvent()
+// This function reads the DHT22 every 2 seconds and sends the values
+// to Virtual Pin V2 (temperature) and V3 (humidity).
+void onTimerEvent()
 {
-  // You can send any value at any time.
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature(); // Celsius
+
+  if (isnan(humidity) || isnan(temperature))
+  {
+    Serial.println("Failed to read from DHT22 sensor!");
+    return;
+  }
+
+  Serial.printf("Temperature: %.1f C, Humidity: %.1f %%\r\n", temperature, humidity);
+
   // Please don't send more that 10 values per second.
-  Blynk.virtualWrite(V2, millis() / 1000);
+  Blynk.virtualWrite(BLYNK_TEMPERATURE, temperature);
+  Blynk.virtualWrite(BLYNK_HUMIDITY, humidity);
 }
 
 void setup()
@@ -70,6 +88,7 @@ void setup()
   pinMode(PIN_LED_RED, OUTPUT);
   pinMode(PIN_LED_GREEN, OUTPUT);
   Serial.begin(115200);
+  dht.begin();
 
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
   // You can also specify server:
@@ -77,7 +96,7 @@ void setup()
   //Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass, IPAddress(192,168,1,100), 8080);
 
   // Setup a function to be called every second
-  timer.setInterval(1000L, myTimerEvent);
+  timer.setInterval(2000L, onTimerEvent);
 }
 
 void loop()
