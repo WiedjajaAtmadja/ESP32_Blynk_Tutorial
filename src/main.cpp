@@ -22,12 +22,14 @@
 #define PIN_LED_GREEN 0
 #define PIN_DHT 23
 #define DHT_TYPE DHT22
+#define PIN_PIR 22
 
 
 #define BLYNK_LED_RED V0
 #define BLYNK_LED_GREEN V1
 #define BLYNK_TEMPERATURE V2
 #define BLYNK_HUMIDITY V3
+#define BLYNK_PIR_SENSOR V4
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
@@ -36,6 +38,7 @@ char pass[] = "";
 
 BlynkTimer timer;
 DHT dht(PIN_DHT, DHT_TYPE);
+int lastPirState = LOW;
 
 // This function is called every time the Virtual Pin 0 state changes
 BLYNK_WRITE(BLYNK_LED_RED)
@@ -82,11 +85,34 @@ void onTimerEvent()
   Blynk.virtualWrite(BLYNK_HUMIDITY, humidity);
 }
 
+// Polls the PIR sensor and reports state changes to Virtual Pin V4:
+// 1 when motion is detected, 0 when the motion has stopped.
+void onPirCheck()
+{
+  int state = digitalRead(PIN_PIR);
+  if (state == lastPirState)
+  {
+    return;
+  }
+  lastPirState = state;
+
+  if (state == HIGH)
+  {
+    Serial.println("Motion detected!");
+  }
+  else
+  {
+    Serial.println("Motion ended.");
+  }
+  Blynk.virtualWrite(BLYNK_PIR_SENSOR, state);
+}
+
 void setup()
 {
   // Debug console
   pinMode(PIN_LED_RED, OUTPUT);
   pinMode(PIN_LED_GREEN, OUTPUT);
+  pinMode(PIN_PIR, INPUT);
   Serial.begin(115200);
   dht.begin();
 
@@ -97,6 +123,8 @@ void setup()
 
   // Setup a function to be called every second
   timer.setInterval(2000L, onTimerEvent);
+  // Check the PIR sensor 5 times per second
+  timer.setInterval(200L, onPirCheck);
 }
 
 void loop()
