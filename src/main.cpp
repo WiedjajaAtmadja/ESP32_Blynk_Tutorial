@@ -17,6 +17,13 @@
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 
+#define PIN_LED_RED 2
+#define PIN_LED_GREEN 0
+
+
+#define BLYNK_LED_RED V0
+#define BLYNK_LED_GREEN V1
+
 // Your WiFi credentials.
 // Set password to "" for open networks.
 char ssid[] = "Wokwi-GUEST";
@@ -25,22 +32,18 @@ char pass[] = "";
 BlynkTimer timer;
 
 // This function is called every time the Virtual Pin 0 state changes
-BLYNK_WRITE(V0)
+BLYNK_WRITE(BLYNK_LED_RED)
 {
   // Set incoming value from pin V0 to a variable
   int value = param.asInt();
+  Serial.printf("V0 value: %d\r\n", value);
+  digitalWrite(PIN_LED_RED, value);
 
-  // Update state
-  Blynk.virtualWrite(V1, value);
 }
 
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED()
 {
-  // Change Web Link Button message to "Congratulations!"
-  Blynk.setProperty(V3, "offImageUrl", "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations.png");
-  Blynk.setProperty(V3, "onImageUrl",  "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations_pressed.png");
-  Blynk.setProperty(V3, "url", "https://docs.blynk.io/en/getting-started/what-do-i-need-to-blynk/how-quickstart-device-was-made");
 }
 
 // This function sends Arduino's uptime every second to Virtual Pin 2.
@@ -54,6 +57,8 @@ void myTimerEvent()
 void setup()
 {
   // Debug console
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
   Serial.begin(115200);
 
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
